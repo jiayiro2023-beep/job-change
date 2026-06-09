@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>軍職專長轉銜民間職業查找系統 (嘉義榮服處製)</title>
+    <title>軍職專長轉銜民間職業查找系統 (現代美學版)</title>
     <!-- PapaParse 解析庫 -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
     
@@ -290,7 +290,11 @@
 
 <div class="container">
     <h1 class="header-title">軍職專長轉銜查找系統</h1>
-    <div class="header-subtitle">專業對接，無縫銜接民間職場</div>
+    <!-- 標題下方已完美融入 (嘉義榮服處製) 的專屬標章 -->
+    <div class="header-subtitle">
+        專業對接，無縫銜接民間職場<br>
+        <span style="font-weight: 700; color: var(--primary-color); display: inline-block; margin-top: 6px;">(嘉義榮服處製)</span>
+    </div>
     
     <div id="localUploadBox" class="local-upload-box">
         <span>💡 偵測為本機模式：請選取 <strong>data.csv</strong> 檔案以啟用系統。</span>
@@ -422,6 +426,7 @@
         return text.replace(regex, '<mark class="highlight">$1</mark>');
     }
 
+    // 複製卡片資訊至剪貼簿
     function copyCardText(button, title, category, reason, licenses) {
         const textToCopy = `【推薦職缺】${title} (${category})\n\n【轉銜優勢】\n${reason.replace(/<[^>]*>?/gm, '')}\n\n【證照建議】\n${licenses.replace(/<br>/g, '\n').replace(/<[^>]*>?/gm, '')}`;
         
