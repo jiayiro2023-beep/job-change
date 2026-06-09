@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>軍職專長轉銜民間職業查找系統 (頂級體驗版)</title>
+    <title>軍職專長轉銜民間職業查找系統 (雙模式版)</title>
     <!-- PapaParse 解析庫 -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
     
@@ -33,7 +33,7 @@
             margin: 0;
             padding: 20px;
             line-height: 1.6;
-            scroll-behavior: smooth; /* 讓畫面滾動變得平滑 */
+            scroll-behavior: smooth; 
         }
         .container { max-width: 1300px; margin: 0 auto; }
         
@@ -49,7 +49,7 @@
         .local-upload-box { background: #fef08a; padding: 12px 20px; border-radius: 8px; margin-bottom: 20px; font-size: 15px; color: #854d0e; display: none; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); font-weight: bold;}
         .local-upload-box input[type="file"] { font-size: 14px; padding: 5px; }
 
-        /* 優化4：控制面板置頂 (吸頂設計)，加入毛玻璃特效 */
+        /* 控制面板置頂 (吸頂設計) */
         .sticky-wrapper {
             position: sticky;
             top: 10px;
@@ -99,10 +99,37 @@
             padding-top: 12px;
             border-top: 1px dashed var(--border-color);
         }
-        .btn-reset {
-            background-color: #e2e8f0;
-            color: #475569;
+        
+        /* 模式切換開關 */
+        .view-toggle {
+            display: flex;
+            background: #e2e8f0;
+            padding: 4px;
+            border-radius: 8px;
+            gap: 4px;
+        }
+        .view-btn {
             border: none;
+            background: transparent;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            color: #64748b;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+        .view-btn.active {
+            background: white;
+            color: var(--primary-color);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+        .view-btn:hover:not(.active) { color: #334155; }
+
+        .btn-reset {
+            background-color: #f1f5f9;
+            color: #475569;
+            border: 1px solid #cbd5e1;
             padding: 8px 16px;
             border-radius: 8px;
             cursor: pointer;
@@ -113,10 +140,10 @@
             gap: 6px;
             transition: all 0.2s;
         }
-        .btn-reset:hover { background-color: #cbd5e1; color: #0f172a; }
+        .btn-reset:hover { background-color: #e2e8f0; color: #0f172a; }
         .stats { font-size: 15px; color: var(--primary-color); font-weight: 800; background: #ccfbf1; padding: 6px 14px; border-radius: 20px; }
 
-        /* 卡片式排版 */
+        /* --- 卡片式排版 --- */
         .card-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
@@ -134,41 +161,11 @@
             transition: transform 0.2s ease, box-shadow 0.2s ease;
             position: relative;
         }
-        .card:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 12px 25px rgba(0,0,0,0.1);
-        }
-        
-        .card-header {
-            background: #f8fafc;
-            padding: 15px 20px;
-            border-bottom: 1px solid #e2e8f0;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            gap: 10px;
-        }
+        .card:hover { transform: translateY(-4px); box-shadow: 0 12px 25px rgba(0,0,0,0.1); }
+        .card-header { background: #f8fafc; padding: 15px 20px; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; gap: 10px; }
         .mil-badge { background: #334155; color: white; padding: 5px 12px; border-radius: 6px; font-size: 13px; font-weight: bold; }
         .cat-badge { padding: 5px 12px; border-radius: 6px; font-size: 13px; font-weight: bold; text-align: right; }
         
-        /* 優化1：一鍵複製按鈕 */
-        .copy-btn {
-            background: #f1f5f9;
-            border: 1px solid #cbd5e1;
-            color: #475569;
-            padding: 4px 10px;
-            border-radius: 6px;
-            font-size: 12px;
-            font-weight: bold;
-            cursor: pointer;
-            transition: all 0.2s;
-            display: flex;
-            align-items: center;
-            gap: 4px;
-        }
-        .copy-btn:hover { background: #e2e8f0; color: #0f172a; }
-        .copy-btn.copied { background: #dcfce7; color: #166534; border-color: #bbf7d0; }
-
         .card-body { padding: 20px; flex: 1; display: flex; flex-direction: column; gap: 15px; }
         .card-title-row { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; }
         .card-title { font-size: 20px; color: var(--primary-color); margin: 0; font-weight: 800; line-height: 1.3;}
@@ -177,25 +174,34 @@
         .info-block h4 { margin: 0 0 10px 0; font-size: 14px; color: #475569; display: flex; align-items: center; gap: 6px; border-bottom: 2px solid #e2e8f0; padding-bottom: 5px; }
         .info-block p { margin: 0; font-size: 14.5px; color: #334155; white-space: pre-wrap; line-height: 1.6; }
         
-        .card-footer {
-            background: #fffbeb;
-            padding: 15px 20px;
-            border-top: 1px solid #fde68a;
-            font-size: 14px;
-            color: #92400e;
-            line-height: 1.5;
-        }
+        .card-footer { background: #fffbeb; padding: 15px 20px; border-top: 1px solid #fde68a; font-size: 14px; color: #92400e; line-height: 1.5; }
 
+        /* --- 列表式排版 --- */
+        .table-container {
+            overflow-x: auto;
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+            background: white;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.04);
+            margin-bottom: 30px;
+            display: none; /* 預設隱藏，由 JS 控制 */
+        }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 16px; text-align: left; border-bottom: 1px solid #e2e8f0; vertical-align: top; }
+        th { background-color: #f8fafc; color: #334155; font-weight: 700; white-space: nowrap; font-size: 15px; }
+        tr:hover { background-color: #f8fafc; }
+        .td-job-title { color: var(--primary-color); font-size: 16px; font-weight: bold; margin-top: 8px;}
+        .td-multi-line { white-space: pre-wrap; font-size: 14.5px; color: #334155; line-height: 1.6; }
+
+        /* 共用功能樣式 */
+        .copy-btn {
+            background: #f1f5f9; border: 1px solid #cbd5e1; color: #475569; padding: 4px 10px; border-radius: 6px; font-size: 12px; font-weight: bold; cursor: pointer; transition: all 0.2s; display: inline-flex; align-items: center; gap: 4px;
+        }
+        .copy-btn:hover { background: #e2e8f0; color: #0f172a; }
+        .copy-btn.copied { background: #dcfce7; color: #166534; border-color: #bbf7d0; }
+        
+        .highlight { background-color: #fef08a; color: #000; padding: 0 3px; border-radius: 3px; font-weight: bold; }
         .empty-state { text-align: center; padding: 60px 20px; color: #64748b; font-size: 18px; font-weight: bold; background: white; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.04); }
-
-        /* 優化2：螢光筆高亮樣式 */
-        .highlight {
-            background-color: #fef08a; /* 螢光黃 */
-            color: #000;
-            padding: 0 3px;
-            border-radius: 3px;
-            font-weight: bold;
-        }
 
         /* 分頁按鈕 */
         .pagination-container { display: flex; justify-content: center; align-items: center; gap: 8px; flex-wrap: wrap; padding-bottom: 40px; }
@@ -216,7 +222,7 @@
         <input type="file" id="localCsvFile" accept=".csv">
     </div>
 
-    <!-- 吸頂外掛容器 -->
+    <!-- 控制面板 -->
     <div class="sticky-wrapper">
         <div class="control-panel">
             <div class="filters-row">
@@ -235,9 +241,16 @@
             </div>
             
             <div class="action-row">
-                <button class="btn-reset" id="resetBtn" onclick="resetFilters()" disabled>
-                    🔄 清除所有條件
-                </button>
+                <!-- 視圖切換區 -->
+                <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+                    <button class="btn-reset" id="resetBtn" onclick="resetFilters()" disabled>
+                        🔄 清除條件
+                    </button>
+                    <div class="view-toggle">
+                        <button id="btnViewCard" class="view-btn active" onclick="switchView('card')">📇 卡片模式</button>
+                        <button id="btnViewList" class="view-btn" onclick="switchView('list')">📄 列表模式</button>
+                    </div>
+                </div>
                 <div id="resultStats" class="stats">🔄 系統初始化中...</div>
             </div>
         </div>
@@ -245,6 +258,25 @@
 
     <!-- 卡片展示區 -->
     <div id="cardContainer" class="card-grid"></div>
+
+    <!-- 列表展示區 -->
+    <div id="tableContainer" class="table-container">
+        <table id="dataTable">
+            <thead>
+                <tr>
+                    <th width="12%">軍職專長</th>
+                    <th width="18%">推薦職缺</th>
+                    <th width="30%">工作任務內容</th>
+                    <th width="25%">轉銜理由與優勢</th>
+                    <th width="15%">證照要求</th>
+                </tr>
+            </thead>
+            <tbody id="tableBody"></tbody>
+        </table>
+    </div>
+
+    <!-- 查無資料時顯示 -->
+    <div id="emptyContainer" style="display: none;"></div>
 
     <!-- 分頁導覽列 -->
     <div class="pagination-container" id="pagination"></div>
@@ -255,18 +287,17 @@
     let filteredData = [];     
     let currentPage = 1;       
     const rowsPerPage = 10;
-    let currentKeyword = ""; // 記住目前的搜尋字，用來畫螢光筆
+    let currentKeyword = ""; 
+    let currentViewMode = "card"; // 預設使用卡片模式
 
-    // 優化3：智慧型調色盤 (給職業類別標籤用)
     const colorPalette = [
-        { bg: '#e0f2fe', text: '#0369a1' }, // 藍色系
-        { bg: '#f3e8ff', text: '#6b21a8' }, // 紫色系
-        { bg: '#dcfce7', text: '#15803d' }, // 綠色系
-        { bg: '#ffedd5', text: '#c2410c' }, // 橘色系
-        { bg: '#ffe4e6', text: '#be123c' }  // 粉紅色系
+        { bg: '#e0f2fe', text: '#0369a1' }, 
+        { bg: '#f3e8ff', text: '#6b21a8' }, 
+        { bg: '#dcfce7', text: '#15803d' }, 
+        { bg: '#ffedd5', text: '#c2410c' }, 
+        { bg: '#ffe4e6', text: '#be123c' }  
     ];
 
-    // 根據文字內容自動分配固定顏色
     function getCategoryStyle(categoryText) {
         if (!categoryText) return '';
         let hash = 0;
@@ -275,20 +306,16 @@
         return `background-color: ${color.bg}; color: ${color.text};`;
     }
 
-    // 優化2：螢光筆文字替換函數
     function highlightText(text, keyword) {
         if (!text) return '-';
         if (!keyword || keyword.trim() === '') return text;
-        // 使用正規表達式，不分大小寫尋找關鍵字，並套上 highlight 標籤
         const regex = new RegExp(`(${keyword})`, 'gi');
         return text.replace(regex, '<mark class="highlight">$1</mark>');
     }
 
-    // 優化1：一鍵複製功能
     function copyCardText(button, title, category, reason, licenses) {
         const textToCopy = `【推薦職缺】${title} (${category})\n\n【轉銜優勢】\n${reason.replace(/<[^>]*>?/gm, '')}\n\n【證照建議】\n${licenses.replace(/<br>/g, '\n').replace(/<[^>]*>?/gm, '')}`;
         
-        // 使用相容性最高的 execCommand 來複製
         const textArea = document.createElement("textarea");
         textArea.value = textToCopy;
         document.body.appendChild(textArea);
@@ -296,7 +323,6 @@
         document.execCommand("copy");
         document.body.removeChild(textArea);
         
-        // 視覺回饋
         const originalText = button.innerHTML;
         button.innerHTML = '✅ 已複製';
         button.classList.add('copied');
@@ -305,6 +331,18 @@
             button.innerHTML = originalText;
             button.classList.remove('copied');
         }, 2000);
+    }
+
+    // --- 切換視圖功能 ---
+    function switchView(mode) {
+        currentViewMode = mode;
+        
+        // 更新按鈕樣式
+        document.getElementById('btnViewCard').classList.toggle('active', mode === 'card');
+        document.getElementById('btnViewList').classList.toggle('active', mode === 'list');
+        
+        // 重新繪製目前頁面
+        renderCurrentView();
     }
 
     window.onload = function() {
@@ -368,7 +406,7 @@
         initFilters(specialties, categories);
         filteredData = [...globalData];
         currentPage = 1;
-        renderCardsPage();
+        renderCurrentView();
     }
 
     function initFilters(specialties, categories) {
@@ -411,20 +449,23 @@
         });
 
         currentPage = 1; 
-        renderCardsPage();
+        renderCurrentView();
     }
 
     function showEmptyState(message) {
-        const container = document.getElementById('cardContainer');
-        container.innerHTML = `<div class="empty-state" style="grid-column: 1 / -1;">${message}</div>`;
+        document.getElementById('cardContainer').style.display = 'none';
+        document.getElementById('tableContainer').style.display = 'none';
+        
+        const emptyContainer = document.getElementById('emptyContainer');
+        emptyContainer.style.display = 'block';
+        emptyContainer.innerHTML = `<div class="empty-state">${message}</div>`;
         document.getElementById('pagination').innerHTML = '';
     }
 
-    function renderCardsPage() {
-        const container = document.getElementById('cardContainer');
+    // --- 核心渲染控制器 ---
+    function renderCurrentView() {
+        document.getElementById('emptyContainer').style.display = 'none';
         const stats = document.getElementById('resultStats');
-        container.innerHTML = '';
-
         stats.innerText = `✅ 共找到 ${filteredData.length} 筆職缺`;
 
         if (filteredData.length === 0) {
@@ -436,6 +477,24 @@
         const endIndex = startIndex + rowsPerPage;
         const pageData = filteredData.slice(startIndex, endIndex);
 
+        if (currentViewMode === 'card') {
+            document.getElementById('cardContainer').style.display = 'grid';
+            document.getElementById('tableContainer').style.display = 'none';
+            renderCards(pageData);
+        } else {
+            document.getElementById('cardContainer').style.display = 'none';
+            document.getElementById('tableContainer').style.display = 'block';
+            renderTable(pageData);
+        }
+
+        renderPaginationControls();
+    }
+
+    // 渲染卡片模式
+    function renderCards(pageData) {
+        const container = document.getElementById('cardContainer');
+        container.innerHTML = '';
+
         pageData.forEach(item => {
             const card = document.createElement('div');
             card.className = 'card';
@@ -445,13 +504,10 @@
             if (item.建議證照) rawLicenses += `<strong>💡 建議證照：</strong>${item.建議證照}`;
             if (!rawLicenses) rawLicenses = '✅ 無特別要求證照';
 
-            // 套用螢光筆高亮
             const hlJobTitle = highlightText(item.職業名稱, currentKeyword);
             const hlTasks = highlightText(item.民間工作任務用語, currentKeyword);
             const hlReason = highlightText(item.轉銜理由, currentKeyword);
             const hlLicenses = highlightText(rawLicenses, currentKeyword);
-            
-            // 取得智慧配色
             const catStyle = getCategoryStyle(item.職業類別);
 
             card.innerHTML = `
@@ -463,15 +519,13 @@
                     <div class="card-title-row">
                         <h3 class="card-title">${hlJobTitle}</h3>
                         <button class="copy-btn" onclick="copyCardText(this, '${item.職業名稱 || ''}', '${item.職業類別 || ''}', \`${item.轉銜理由 || ''}\`, \`${rawLicenses}\`)">
-                            📋 複製分享
+                            📋 複製
                         </button>
                     </div>
-                    
                     <div class="info-block">
                         <h4>📝 工作任務內容</h4>
                         <p>${hlTasks}</p>
                     </div>
-                    
                     <div class="info-block" style="background: #f0fdf4;">
                         <h4 style="color: #166534;">🎯 轉銜理由與優勢</h4>
                         <p style="color: #14532d;">${hlReason}</p>
@@ -483,8 +537,42 @@
             `;
             container.appendChild(card);
         });
+    }
 
-        renderPaginationControls();
+    // 渲染列表模式
+    function renderTable(pageData) {
+        const tbody = document.getElementById('tableBody');
+        tbody.innerHTML = '';
+
+        pageData.forEach(item => {
+            const tr = document.createElement('tr');
+            
+            let rawLicenses = '';
+            if (item.必須證照) rawLicenses += `<strong>必須：</strong>${item.必須證照}<br>`;
+            if (item.建議證照) rawLicenses += `<strong>建議：</strong>${item.建議證照}`;
+            if (!rawLicenses) rawLicenses = '無特別要求';
+
+            const hlJobTitle = highlightText(item.職業名稱, currentKeyword);
+            const hlTasks = highlightText(item.民間工作任務用語, currentKeyword);
+            const hlReason = highlightText(item.轉銜理由, currentKeyword);
+            const hlLicenses = highlightText(rawLicenses, currentKeyword);
+            const catStyle = getCategoryStyle(item.職業類別);
+
+            tr.innerHTML = `
+                <td><strong>${item.軍職專長 || '-'}</strong></td>
+                <td>
+                    ${item.職業類別 ? `<span class="cat-badge" style="display:inline-block; margin-bottom:5px; ${catStyle}">${item.職業類別}</span><br>` : ''}
+                    <div class="td-job-title">${hlJobTitle}</div>
+                    <button class="copy-btn" style="margin-top: 10px;" onclick="copyCardText(this, '${item.職業名稱 || ''}', '${item.職業類別 || ''}', \`${item.轉銜理由 || ''}\`, \`${rawLicenses}\`)">
+                        📋 複製資訊
+                    </button>
+                </td>
+                <td class="td-multi-line">${hlTasks}</td>
+                <td class="td-multi-line">${hlReason}</td>
+                <td class="td-multi-line">${hlLicenses}</td>
+            `;
+            tbody.appendChild(tr);
+        });
     }
 
     function renderPaginationControls() {
@@ -500,7 +588,7 @@
         prevBtn.disabled = currentPage === 1;
         prevBtn.addEventListener('click', () => {
             currentPage--;
-            renderCardsPage();
+            renderCurrentView();
             window.scrollTo({top: 0, behavior: 'smooth'}); 
         });
         paginationContainer.appendChild(prevBtn);
@@ -517,7 +605,7 @@
             pageBtn.innerText = i;
             pageBtn.addEventListener('click', () => {
                 currentPage = i;
-                renderCardsPage();
+                renderCurrentView();
                 window.scrollTo({top: 0, behavior: 'smooth'});
             });
             paginationContainer.appendChild(pageBtn);
@@ -529,7 +617,7 @@
         nextBtn.disabled = currentPage === totalPages;
         nextBtn.addEventListener('click', () => {
             currentPage++;
-            renderCardsPage();
+            renderCurrentView();
             window.scrollTo({top: 0, behavior: 'smooth'});
         });
         paginationContainer.appendChild(nextBtn);
