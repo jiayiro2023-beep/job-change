@@ -87,7 +87,7 @@
             transition: all 0.3s ease;
         }
         
-        /* --- 新增：可摺疊標題列美學 --- */
+        /* 可摺疊標題列美學 */
         .panel-toggle-btn {
             display: flex;
             justify-content: space-between;
@@ -108,13 +108,13 @@
             transform: rotate(-180deg);
         }
         
-        /* --- 新增：平滑收合動畫結構 --- */
+        /* 平滑收合動畫結構 */
         .panel-wrapper {
             display: grid;
             grid-template-rows: 1fr;
             transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
             opacity: 1;
-            margin-top: 18px; /* 展開時的間距 */
+            margin-top: 18px; 
         }
         .panel-wrapper.collapsed {
             grid-template-rows: 0fr;
@@ -130,8 +130,9 @@
 
         .filters-row {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-            gap: 20px;
+            /* 調整為4欄，容納編碼切換按鈕，維持手機/電腦美感 */
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
             align-items: end;
         }
         .input-group { display: flex; flex-direction: column; gap: 8px; }
@@ -252,7 +253,7 @@
 
         /* --- 列表式排版 --- */
         .table-container { overflow-x: auto; border-radius: var(--radius-lg); border: 1px solid var(--border-color); background: white; box-shadow: var(--shadow-soft); margin-bottom: 40px; display: none; animation: fadeIn 0.4s ease-out forwards; }
-        table { width: 100%; border-collapse: collapse; min-width: 900px; } /* 確保手機版滑動正常 */
+        table { width: 100%; border-collapse: collapse; min-width: 900px; } 
         th, td { padding: 20px; text-align: left; border-bottom: 1px solid #f1f5f9; vertical-align: top; }
         th { background-color: #f8fafc; color: var(--text-muted); font-weight: 700; white-space: nowrap; font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px;}
         tr:hover td { background-color: #f8fafc; }
@@ -279,8 +280,8 @@
             body { padding: 15px 10px; }
             .header-title { font-size: 28px; }
             .control-panel { padding: 16px; }
-            .card-grid { grid-template-columns: 1fr; } /* 手機改為單欄 */
-            .view-toggle { width: 100%; justify-content: center; } /* 視圖切換置中置寬 */
+            .card-grid { grid-template-columns: 1fr; } 
+            .view-toggle { width: 100%; justify-content: center; } 
             .btn-reset { flex: 1; justify-content: center; }
             .stats { width: 100%; text-align: center; }
         }
@@ -290,7 +291,6 @@
 
 <div class="container">
     <h1 class="header-title">軍職專長轉銜查找系統</h1>
-    <!-- 標題下方已完美融入 (嘉義榮服處製) 的專屬標章 -->
     <div class="header-subtitle">
         專業對接，無縫銜接民間職場<br>
         <span style="font-weight: 700; color: var(--primary-color); display: inline-block; margin-top: 6px;">(嘉義榮服處製)</span>
@@ -305,7 +305,7 @@
     <div class="sticky-wrapper">
         <div class="control-panel">
             
-            <!-- 新增：可點擊的摺疊觸發列 -->
+            <!-- 可點擊的摺疊觸發列 -->
             <div id="toggleBtn" class="panel-toggle-btn" onclick="toggleSearchPanel()">
                 <div style="display: flex; align-items: center; gap: 8px;">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/></svg>
@@ -314,7 +314,7 @@
                 <svg class="chevron" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m18 15-6-6-6 6"/></svg>
             </div>
             
-            <!-- 新增：用於動畫的內容包裝層 -->
+            <!-- 用於動畫的內容包裝層 -->
             <div id="searchPanelWrapper" class="panel-wrapper">
                 <div class="panel-inner">
                     <div class="filters-row">
@@ -329,6 +329,14 @@
                         <div class="input-group">
                             <label for="searchInput">🔍 全域關鍵字搜尋</label>
                             <input type="text" id="searchInput" placeholder="可輸入軍職、職缺、任務..." disabled>
+                        </div>
+                        <!-- 新增：精美的檔案編碼手動切換器 -->
+                        <div class="input-group">
+                            <label for="encodingSelect">⚙️ 檔案編碼 (若有問號可切換)</label>
+                            <select id="encodingSelect" disabled>
+                                <option value="utf-8">萬國碼 (UTF-8)</option>
+                                <option value="big5">微軟繁體中文 (Big5 / ANSI)</option>
+                            </select>
                         </div>
                     </div>
                     
@@ -384,8 +392,9 @@
     const rowsPerPage = 10;
     let currentKeyword = ""; 
     let currentViewMode = "card"; 
+    let currentArrayBuffer = null; // 儲存載入的原始位元組，方便點擊下拉選單時即時更換解碼
 
-    // --- 新增：面板摺疊控制函數 ---
+    // 面板摺疊控制函數
     function toggleSearchPanel() {
         const wrapper = document.getElementById('searchPanelWrapper');
         const btn = document.getElementById('toggleBtn');
@@ -394,7 +403,6 @@
         wrapper.classList.toggle('collapsed');
         btn.classList.toggle('collapsed');
         
-        // 變更文字提示，讓使用者清楚目前狀態
         if (wrapper.classList.contains('collapsed')) {
             text.innerText = '展開搜尋與篩選';
         } else {
@@ -454,44 +462,86 @@
         renderCurrentView();
     }
 
+    // 核心技術：讀取二進制資料，並實行「智慧自動解碼」與「手動解碼切換」
+    function decodeAndParse(arrayBuffer, forceEncoding = "auto") {
+        let text = "";
+        let usedEncoding = "utf-8";
+
+        if (forceEncoding === "auto") {
+            try {
+                // 1. 先用 UTF-8 來解碼，並開啟「嚴格檢查模式 (fatal: true)」
+                const utf8Decoder = new TextDecoder('utf-8', { fatal: true });
+                text = utf8Decoder.decode(arrayBuffer);
+                usedEncoding = "utf-8";
+            } catch (e) {
+                // 2. 如果 UTF-8 解碼失敗拋出異常（代表檔案有 Big5 的中文特殊字節），瞬間自動改用 Big5 解碼
+                const big5Decoder = new TextDecoder('big5');
+                text = big5Decoder.decode(arrayBuffer);
+                usedEncoding = "big5";
+            }
+        } else {
+            // 如果使用者手動選擇了特定編碼
+            const customDecoder = new TextDecoder(forceEncoding);
+            text = customDecoder.decode(arrayBuffer);
+            usedEncoding = forceEncoding;
+        }
+
+        // 同步更動網頁上的下拉選單顯示
+        document.getElementById('encodingSelect').value = usedEncoding;
+        document.getElementById('encodingSelect').disabled = false;
+
+        // 使用 PapaParse 解析乾淨文字
+        Papa.parse(text, {
+            header: true,
+            skipEmptyLines: true,
+            complete: function(results) {
+                processAndCleanData(results.data);
+            }
+        });
+    }
+
     window.onload = function() {
+        // 綁定手動編碼切換事件
+        document.getElementById('encodingSelect').addEventListener('change', function(e) {
+            if (currentArrayBuffer) {
+                decodeAndParse(currentArrayBuffer, e.target.value);
+            }
+        });
+
         if (window.location.protocol === 'file:') {
             document.getElementById('localUploadBox').style.display = 'flex';
             document.getElementById('resultStats').innerText = '待匯入資料';
             showEmptyState('📁 請先在上方黃色區塊匯入您的 data.csv 檔案。');
             
+            // 本機手動上傳
             document.getElementById('localCsvFile').addEventListener('change', function(e) {
                 const file = e.target.files[0];
                 if (!file) return;
-                parseCsvText(file, 'big5'); 
+                
+                const reader = new FileReader();
+                reader.onload = function(evt) {
+                    currentArrayBuffer = evt.target.result; // 保存原始二進制數據
+                    decodeAndParse(currentArrayBuffer, "auto"); // 啟動自動編碼辨識
+                };
+                reader.readAsArrayBuffer(file); // 改為讀取 ArrayBuffer
             });
         } else {
+            // 線上自動讀取 data.csv
             fetch('data.csv')
             .then(response => {
                 if (!response.ok) throw new Error('找不到 data.csv');
-                return response.blob();
+                return response.arrayBuffer(); // 改為獲取二進制 ArrayBuffer
             })
-            .then(blob => parseCsvText(blob, 'big5'))
+            .then(arrayBuffer => {
+                currentArrayBuffer = arrayBuffer; // 保存原始二進制數據
+                decodeAndParse(arrayBuffer, "auto"); // 啟動自動編碼辨識
+            })
             .catch(err => {
                 document.getElementById('resultStats').innerText = '讀取失敗';
                 showEmptyState('❌ 載入失敗，請確認 data.csv 是否已上傳至正確位置。');
             });
         }
     };
-
-    function parseCsvText(target, encoding) {
-        const reader = new FileReader();
-        reader.onload = function(e) {
-            Papa.parse(e.target.result, {
-                header: true,
-                skipEmptyLines: true,
-                complete: function(results) {
-                    processAndCleanData(results.data);
-                }
-            });
-        };
-        reader.readAsText(target, encoding);
-    }
 
     function processAndCleanData(rawData) {
         globalData = [];
