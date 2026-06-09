@@ -3,13 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>軍職專長轉銜民間職業查找系統 (雙模式版)</title>
+    <title>軍職專長轉銜民間職業查找系統 (嘉義榮服處製)</title>
     <!-- PapaParse 解析庫 -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
     
     <!-- PWA 支援 -->
     <link rel="manifest" href="manifest.json">
-    <meta name="theme-color" content="#0f766e">
+    <meta name="theme-color" content="#1e40af">
     <script>
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
@@ -18,76 +18,142 @@
         }
     </script>
     <style>
+        /* 現代美學色彩與變數定義 */
         :root {
-            --primary-color: #0f766e;
-            --primary-light: #14b8a6;
-            --bg-color: #f1f5f9;
-            --text-color: #334155;
-            --border-color: #cbd5e1;
+            --primary-color: #1e40af; 
+            --secondary-color: #0d9488; 
+            --bg-color: #f8fafc;
+            --text-main: #1e293b;
+            --text-muted: #64748b;
+            --border-color: #e2e8f0;
             --card-bg: #ffffff;
+            --radius-lg: 16px;
+            --radius-md: 10px;
+            --shadow-soft: 0 10px 40px -10px rgba(0,0,0,0.08);
+            --shadow-hover: 0 20px 40px -10px rgba(0,0,0,0.12);
         }
+        
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
             background-color: var(--bg-color);
-            color: var(--text-color);
+            color: var(--text-main);
             margin: 0;
             padding: 20px;
             line-height: 1.6;
             scroll-behavior: smooth; 
+            background-image: radial-gradient(#e2e8f0 1px, transparent 1px);
+            background-size: 20px 20px;
         }
-        .container { max-width: 1300px; margin: 0 auto; }
         
+        .container { max-width: 1280px; margin: 0 auto; }
+        
+        /* 漸層質感標題 */
         .header-title {
             text-align: center;
-            color: var(--primary-color);
-            font-size: 32px;
-            font-weight: 800;
-            margin-bottom: 20px;
-            text-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            font-size: 36px;
+            font-weight: 900;
+            margin-bottom: 8px;
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: 1px;
+        }
+        .header-subtitle {
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 15px;
+            margin-bottom: 30px;
+            font-weight: 500;
         }
 
-        .local-upload-box { background: #fef08a; padding: 12px 20px; border-radius: 8px; margin-bottom: 20px; font-size: 15px; color: #854d0e; display: none; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); font-weight: bold;}
-        .local-upload-box input[type="file"] { font-size: 14px; padding: 5px; }
+        .local-upload-box { background: linear-gradient(to right, #fef08a, #fde047); padding: 12px 20px; border-radius: var(--radius-md); margin-bottom: 25px; font-size: 15px; color: #854d0e; display: none; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; box-shadow: 0 4px 15px rgba(234, 179, 8, 0.2); font-weight: 600; border: none;}
+        .local-upload-box input[type="file"] { font-size: 14px; padding: 6px; background: rgba(255,255,255,0.5); border-radius: 6px; border: 1px dashed #ca8a04;}
 
-        /* 控制面板置頂 (吸頂設計) */
+        /* 毛玻璃控制面板 (Glassmorphism) */
         .sticky-wrapper {
             position: sticky;
-            top: 10px;
+            top: 15px;
             z-index: 1000;
-            margin-bottom: 30px;
+            margin-bottom: 35px;
         }
         .control-panel { 
-            background: rgba(255, 255, 255, 0.95); 
-            backdrop-filter: blur(10px);
-            padding: 20px 25px; 
-            border-radius: 12px; 
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
-            display: flex; 
-            flex-direction: column;
-            gap: 15px;
-            border: 1px solid rgba(203, 213, 225, 0.5);
+            background: rgba(255, 255, 255, 0.85); 
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            padding: 20px 24px; 
+            border-radius: var(--radius-lg); 
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            transition: all 0.3s ease;
         }
+        
+        /* --- 新增：可摺疊標題列美學 --- */
+        .panel-toggle-btn {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 16px;
+            font-weight: 800;
+            color: var(--primary-color);
+            cursor: pointer;
+            user-select: none;
+            padding-bottom: 0;
+            transition: color 0.2s ease;
+        }
+        .panel-toggle-btn:hover { color: var(--secondary-color); }
+        .panel-toggle-btn .chevron {
+            transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .panel-toggle-btn.collapsed .chevron {
+            transform: rotate(-180deg);
+        }
+        
+        /* --- 新增：平滑收合動畫結構 --- */
+        .panel-wrapper {
+            display: grid;
+            grid-template-rows: 1fr;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            opacity: 1;
+            margin-top: 18px; /* 展開時的間距 */
+        }
+        .panel-wrapper.collapsed {
+            grid-template-rows: 0fr;
+            opacity: 0;
+            margin-top: 0;
+        }
+        .panel-inner {
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+        }
+
         .filters-row {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 15px;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 20px;
             align-items: end;
         }
-        .input-group { display: flex; flex-direction: column; gap: 6px; }
-        label { font-weight: 700; font-size: 14px; color: #475569; display: flex; align-items: center; gap: 6px; }
+        .input-group { display: flex; flex-direction: column; gap: 8px; }
+        label { font-weight: 700; font-size: 13.5px; color: var(--text-main); display: flex; align-items: center; gap: 6px; }
+        
         select, input[type="text"] { 
-            padding: 10px 12px; 
+            padding: 12px 16px; 
             border: 1px solid var(--border-color); 
-            border-radius: 8px; 
+            border-radius: var(--radius-md); 
             font-size: 15px; 
             background-color: #f8fafc; 
-            transition: all 0.3s;
+            transition: all 0.3s ease;
+            color: var(--text-main);
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.02);
+            width: 100%;
+            box-sizing: border-box;
         }
         select:focus, input[type="text"]:focus { 
             outline: none; 
-            border-color: var(--primary-color); 
+            border-color: var(--secondary-color); 
             background-color: #fff;
-            box-shadow: 0 0 0 3px rgba(15, 118, 110, 0.15); 
+            box-shadow: 0 0 0 4px rgba(13, 148, 136, 0.15); 
         }
 
         .action-row {
@@ -96,163 +162,188 @@
             align-items: center;
             flex-wrap: wrap;
             gap: 15px;
-            padding-top: 12px;
-            border-top: 1px dashed var(--border-color);
+            padding-top: 15px;
+            border-top: 1px solid var(--border-color);
         }
         
-        /* 模式切換開關 */
         .view-toggle {
             display: flex;
-            background: #e2e8f0;
-            padding: 4px;
-            border-radius: 8px;
-            gap: 4px;
+            background: #f1f5f9;
+            padding: 5px;
+            border-radius: 12px;
+            gap: 2px;
         }
         .view-btn {
             border: none;
             background: transparent;
-            padding: 8px 16px;
-            border-radius: 6px;
+            padding: 8px 18px;
+            border-radius: 8px;
             cursor: pointer;
-            font-weight: bold;
-            color: #64748b;
+            font-weight: 700;
+            color: var(--text-muted);
             font-size: 14px;
-            transition: all 0.2s;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
         .view-btn.active {
             background: white;
             color: var(--primary-color);
-            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
         }
-        .view-btn:hover:not(.active) { color: #334155; }
+        .view-btn:hover:not(.active) { color: var(--text-main); }
 
         .btn-reset {
-            background-color: #f1f5f9;
-            color: #475569;
-            border: 1px solid #cbd5e1;
-            padding: 8px 16px;
-            border-radius: 8px;
+            background-color: white;
+            color: var(--text-main);
+            border: 1px solid var(--border-color);
+            padding: 10px 18px;
+            border-radius: var(--radius-md);
             cursor: pointer;
-            font-weight: bold;
+            font-weight: 700;
             font-size: 14px;
             display: flex;
             align-items: center;
             gap: 6px;
-            transition: all 0.2s;
+            transition: all 0.2s ease;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.02);
         }
-        .btn-reset:hover { background-color: #e2e8f0; color: #0f172a; }
-        .stats { font-size: 15px; color: var(--primary-color); font-weight: 800; background: #ccfbf1; padding: 6px 14px; border-radius: 20px; }
+        .btn-reset:hover { background-color: #f8fafc; border-color: #cbd5e1; transform: translateY(-1px); }
+        .stats { font-size: 14px; color: #fff; font-weight: 700; background: var(--secondary-color); padding: 6px 16px; border-radius: 999px; box-shadow: 0 4px 10px rgba(13, 148, 136, 0.3);}
 
-        /* --- 卡片式排版 --- */
+        /* --- 頂級卡片排版 --- */
         .card-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
-            gap: 25px;
-            margin-bottom: 30px;
+            grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+            gap: 24px;
+            margin-bottom: 40px;
         }
         .card {
             background: var(--card-bg);
-            border-radius: 12px;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.04);
-            border: 1px solid #e2e8f0;
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-soft);
+            border: 1px solid rgba(255,255,255,0.8);
             display: flex;
             flex-direction: column;
             overflow: hidden;
-            transition: transform 0.2s ease, box-shadow 0.2s ease;
-            position: relative;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            animation: fadeIn 0.4s ease-out forwards;
         }
-        .card:hover { transform: translateY(-4px); box-shadow: 0 12px 25px rgba(0,0,0,0.1); }
-        .card-header { background: #f8fafc; padding: 15px 20px; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; gap: 10px; }
-        .mil-badge { background: #334155; color: white; padding: 5px 12px; border-radius: 6px; font-size: 13px; font-weight: bold; }
-        .cat-badge { padding: 5px 12px; border-radius: 6px; font-size: 13px; font-weight: bold; text-align: right; }
+        .card:hover { transform: translateY(-6px); box-shadow: var(--shadow-hover); }
         
-        .card-body { padding: 20px; flex: 1; display: flex; flex-direction: column; gap: 15px; }
-        .card-title-row { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; }
-        .card-title { font-size: 20px; color: var(--primary-color); margin: 0; font-weight: 800; line-height: 1.3;}
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .card-header { background: #f8fafc; padding: 18px 24px; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+        .mil-badge { background: #1e293b; color: white; padding: 6px 14px; border-radius: 999px; font-size: 13px; font-weight: 700; letter-spacing: 0.5px;}
+        .cat-badge { padding: 6px 14px; border-radius: 999px; font-size: 13px; font-weight: 700; text-align: right; letter-spacing: 0.5px;}
         
-        .info-block { background: #f8fafc; padding: 15px; border-radius: 8px; }
-        .info-block h4 { margin: 0 0 10px 0; font-size: 14px; color: #475569; display: flex; align-items: center; gap: 6px; border-bottom: 2px solid #e2e8f0; padding-bottom: 5px; }
-        .info-block p { margin: 0; font-size: 14.5px; color: #334155; white-space: pre-wrap; line-height: 1.6; }
+        .card-body { padding: 24px; flex: 1; display: flex; flex-direction: column; gap: 18px; }
+        .card-title-row { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
+        .card-title { font-size: 22px; color: var(--primary-color); margin: 0; font-weight: 800; line-height: 1.3; letter-spacing: -0.5px;}
         
-        .card-footer { background: #fffbeb; padding: 15px 20px; border-top: 1px solid #fde68a; font-size: 14px; color: #92400e; line-height: 1.5; }
+        .info-block { background: #f8fafc; padding: 18px; border-radius: var(--radius-md); border-left: 4px solid var(--border-color); }
+        .info-block.success { background: #f0fdf4; border-left-color: #22c55e; }
+        .info-block h4 { margin: 0 0 8px 0; font-size: 14px; color: var(--text-muted); font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;}
+        .info-block.success h4 { color: #166534; }
+        .info-block p { margin: 0; font-size: 15px; color: var(--text-main); white-space: pre-wrap; line-height: 1.7; }
+        
+        .card-footer { background: #fffbeb; padding: 18px 24px; font-size: 14px; color: #92400e; line-height: 1.6; border-top: 1px solid #fde68a;}
 
         /* --- 列表式排版 --- */
-        .table-container {
-            overflow-x: auto;
-            border-radius: 12px;
-            border: 1px solid var(--border-color);
-            background: white;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.04);
-            margin-bottom: 30px;
-            display: none; /* 預設隱藏，由 JS 控制 */
-        }
-        table { width: 100%; border-collapse: collapse; }
-        th, td { padding: 16px; text-align: left; border-bottom: 1px solid #e2e8f0; vertical-align: top; }
-        th { background-color: #f8fafc; color: #334155; font-weight: 700; white-space: nowrap; font-size: 15px; }
-        tr:hover { background-color: #f8fafc; }
-        .td-job-title { color: var(--primary-color); font-size: 16px; font-weight: bold; margin-top: 8px;}
-        .td-multi-line { white-space: pre-wrap; font-size: 14.5px; color: #334155; line-height: 1.6; }
+        .table-container { overflow-x: auto; border-radius: var(--radius-lg); border: 1px solid var(--border-color); background: white; box-shadow: var(--shadow-soft); margin-bottom: 40px; display: none; animation: fadeIn 0.4s ease-out forwards; }
+        table { width: 100%; border-collapse: collapse; min-width: 900px; } /* 確保手機版滑動正常 */
+        th, td { padding: 20px; text-align: left; border-bottom: 1px solid #f1f5f9; vertical-align: top; }
+        th { background-color: #f8fafc; color: var(--text-muted); font-weight: 700; white-space: nowrap; font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px;}
+        tr:hover td { background-color: #f8fafc; }
+        .td-job-title { color: var(--primary-color); font-size: 18px; font-weight: 800; margin-top: 8px;}
+        .td-multi-line { white-space: pre-wrap; font-size: 15px; color: var(--text-main); line-height: 1.7; }
 
-        /* 共用功能樣式 */
-        .copy-btn {
-            background: #f1f5f9; border: 1px solid #cbd5e1; color: #475569; padding: 4px 10px; border-radius: 6px; font-size: 12px; font-weight: bold; cursor: pointer; transition: all 0.2s; display: inline-flex; align-items: center; gap: 4px;
-        }
-        .copy-btn:hover { background: #e2e8f0; color: #0f172a; }
-        .copy-btn.copied { background: #dcfce7; color: #166534; border-color: #bbf7d0; }
+        .copy-btn { background: white; border: 1px solid var(--border-color); color: var(--text-main); padding: 6px 12px; border-radius: 8px; font-size: 12px; font-weight: 700; cursor: pointer; transition: all 0.2s; display: inline-flex; align-items: center; gap: 4px; box-shadow: 0 2px 4px rgba(0,0,0,0.02); }
+        .copy-btn:hover { background: #f8fafc; border-color: #cbd5e1; transform: translateY(-1px);}
+        .copy-btn.copied { background: #22c55e; color: white; border-color: #16a34a; }
         
-        .highlight { background-color: #fef08a; color: #000; padding: 0 3px; border-radius: 3px; font-weight: bold; }
-        .empty-state { text-align: center; padding: 60px 20px; color: #64748b; font-size: 18px; font-weight: bold; background: white; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.04); }
+        .highlight { background-color: #fde047; color: #854d0e; padding: 2px 4px; border-radius: 4px; font-weight: 800; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
+        .empty-state { text-align: center; padding: 80px 20px; color: var(--text-muted); font-size: 18px; font-weight: 700; background: white; border-radius: var(--radius-lg); box-shadow: var(--shadow-soft); }
 
-        /* 分頁按鈕 */
-        .pagination-container { display: flex; justify-content: center; align-items: center; gap: 8px; flex-wrap: wrap; padding-bottom: 40px; }
-        .page-btn { padding: 8px 14px; border: 1px solid var(--border-color); background-color: white; border-radius: 8px; cursor: pointer; color: var(--text-color); font-size: 14px; font-weight: bold; transition: all 0.2s; box-shadow: 0 2px 4px rgba(0,0,0,0.02); }
-        .page-btn:hover:not(:disabled) { background-color: #f1f5f9; border-color: #94a3b8; transform: translateY(-1px); }
+        /* 分頁按鈕美學 */
+        .pagination-container { display: flex; justify-content: center; align-items: center; gap: 10px; flex-wrap: wrap; padding-bottom: 60px; }
+        .page-btn { padding: 10px 16px; border: 1px solid var(--border-color); background-color: white; border-radius: var(--radius-md); cursor: pointer; color: var(--text-main); font-size: 14px; font-weight: 700; transition: all 0.2s; box-shadow: 0 2px 5px rgba(0,0,0,0.02); }
+        .page-btn:hover:not(:disabled) { background-color: #f8fafc; border-color: #cbd5e1; transform: translateY(-2px); }
         .page-btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; box-shadow: none; }
-        .page-btn.active { background-color: var(--primary-color); color: white; border-color: var(--primary-color); box-shadow: 0 4px 6px rgba(15, 118, 110, 0.2); }
-        .page-info { font-size: 14px; color: #64748b; margin: 0 10px; font-weight: bold; }
+        .page-btn.active { background: linear-gradient(135deg, var(--primary-color), #3b82f6); color: white; border-color: transparent; box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2); }
+        .page-info { font-size: 14px; color: var(--text-muted); margin: 0 12px; font-weight: 700; }
+
+        /* --- 手機版專屬優化排版 --- */
+        @media (max-width: 768px) {
+            body { padding: 15px 10px; }
+            .header-title { font-size: 28px; }
+            .control-panel { padding: 16px; }
+            .card-grid { grid-template-columns: 1fr; } /* 手機改為單欄 */
+            .view-toggle { width: 100%; justify-content: center; } /* 視圖切換置中置寬 */
+            .btn-reset { flex: 1; justify-content: center; }
+            .stats { width: 100%; text-align: center; }
+        }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <div class="header-title">軍職專長轉銜民間職業 - 查找系統</div>
+    <h1 class="header-title">軍職專長轉銜查找系統</h1>
+    <div class="header-subtitle">專業對接，無縫銜接民間職場</div>
     
     <div id="localUploadBox" class="local-upload-box">
-        <span>💡 偵測為本機模式：請選取 <strong>data.csv</strong> 檔案啟用系統。</span>
+        <span>💡 偵測為本機模式：請選取 <strong>data.csv</strong> 檔案以啟用系統。</span>
         <input type="file" id="localCsvFile" accept=".csv">
     </div>
 
-    <!-- 控制面板 -->
+    <!-- 吸頂控制面板 -->
     <div class="sticky-wrapper">
         <div class="control-panel">
-            <div class="filters-row">
-                <div class="input-group">
-                    <label for="specFilter">🎯 軍職專長</label>
-                    <select id="specFilter" disabled><option>等待資料載入...</option></select>
+            
+            <!-- 新增：可點擊的摺疊觸發列 -->
+            <div id="toggleBtn" class="panel-toggle-btn" onclick="toggleSearchPanel()">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/></svg>
+                    <span id="toggleText">篩選與搜尋條件</span>
                 </div>
-                <div class="input-group">
-                    <label for="catFilter">💼 民間職業類別</label>
-                    <select id="catFilter" disabled><option>等待資料載入...</option></select>
-                </div>
-                <div class="input-group">
-                    <label for="searchInput">🔍 關鍵字搜尋 (支援黃底螢光筆顯示)</label>
-                    <input type="text" id="searchInput" placeholder="輸入職缺、任務或證照關鍵字..." disabled>
-                </div>
+                <svg class="chevron" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m18 15-6-6-6 6"/></svg>
             </div>
             
-            <div class="action-row">
-                <!-- 視圖切換區 -->
-                <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
-                    <button class="btn-reset" id="resetBtn" onclick="resetFilters()" disabled>
-                        🔄 清除條件
-                    </button>
-                    <div class="view-toggle">
-                        <button id="btnViewCard" class="view-btn active" onclick="switchView('card')">📇 卡片模式</button>
-                        <button id="btnViewList" class="view-btn" onclick="switchView('list')">📄 列表模式</button>
+            <!-- 新增：用於動畫的內容包裝層 -->
+            <div id="searchPanelWrapper" class="panel-wrapper">
+                <div class="panel-inner">
+                    <div class="filters-row">
+                        <div class="input-group">
+                            <label for="specFilter">🎯 軍職專長</label>
+                            <select id="specFilter" disabled><option>等待資料載入...</option></select>
+                        </div>
+                        <div class="input-group">
+                            <label for="catFilter">💼 民間職業類別</label>
+                            <select id="catFilter" disabled><option>等待資料載入...</option></select>
+                        </div>
+                        <div class="input-group">
+                            <label for="searchInput">🔍 全域關鍵字搜尋</label>
+                            <input type="text" id="searchInput" placeholder="可輸入軍職、職缺、任務..." disabled>
+                        </div>
+                    </div>
+                    
+                    <div class="action-row">
+                        <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap; flex: 1;">
+                            <button class="btn-reset" id="resetBtn" onclick="resetFilters()" disabled>
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+                                重置
+                            </button>
+                            <div class="view-toggle">
+                                <button id="btnViewCard" class="view-btn active" onclick="switchView('card')">📇 卡片視圖</button>
+                                <button id="btnViewList" class="view-btn" onclick="switchView('list')">📄 列表視圖</button>
+                            </div>
+                        </div>
+                        <div id="resultStats" class="stats">系統初始化中...</div>
                     </div>
                 </div>
-                <div id="resultStats" class="stats">🔄 系統初始化中...</div>
             </div>
+
         </div>
     </div>
 
@@ -264,10 +355,10 @@
         <table id="dataTable">
             <thead>
                 <tr>
-                    <th width="12%">軍職專長</th>
-                    <th width="18%">推薦職缺</th>
-                    <th width="30%">工作任務內容</th>
-                    <th width="25%">轉銜理由與優勢</th>
+                    <th width="15%">軍職專長</th>
+                    <th width="20%">推薦職缺</th>
+                    <th width="28%">工作任務內容</th>
+                    <th width="22%">轉銜理由與優勢</th>
                     <th width="15%">證照要求</th>
                 </tr>
             </thead>
@@ -288,14 +379,32 @@
     let currentPage = 1;       
     const rowsPerPage = 10;
     let currentKeyword = ""; 
-    let currentViewMode = "card"; // 預設使用卡片模式
+    let currentViewMode = "card"; 
+
+    // --- 新增：面板摺疊控制函數 ---
+    function toggleSearchPanel() {
+        const wrapper = document.getElementById('searchPanelWrapper');
+        const btn = document.getElementById('toggleBtn');
+        const text = document.getElementById('toggleText');
+        
+        wrapper.classList.toggle('collapsed');
+        btn.classList.toggle('collapsed');
+        
+        // 變更文字提示，讓使用者清楚目前狀態
+        if (wrapper.classList.contains('collapsed')) {
+            text.innerText = '展開搜尋與篩選';
+        } else {
+            text.innerText = '篩選與搜尋條件';
+        }
+    }
 
     const colorPalette = [
         { bg: '#e0f2fe', text: '#0369a1' }, 
         { bg: '#f3e8ff', text: '#6b21a8' }, 
         { bg: '#dcfce7', text: '#15803d' }, 
         { bg: '#ffedd5', text: '#c2410c' }, 
-        { bg: '#ffe4e6', text: '#be123c' }  
+        { bg: '#ffe4e6', text: '#be123c' },
+        { bg: '#e0e7ff', text: '#4338ca' }
     ];
 
     function getCategoryStyle(categoryText) {
@@ -324,7 +433,7 @@
         document.body.removeChild(textArea);
         
         const originalText = button.innerHTML;
-        button.innerHTML = '✅ 已複製';
+        button.innerHTML = '✅ 成功複製';
         button.classList.add('copied');
         
         setTimeout(() => {
@@ -333,23 +442,18 @@
         }, 2000);
     }
 
-    // --- 切換視圖功能 ---
     function switchView(mode) {
         currentViewMode = mode;
-        
-        // 更新按鈕樣式
         document.getElementById('btnViewCard').classList.toggle('active', mode === 'card');
         document.getElementById('btnViewList').classList.toggle('active', mode === 'list');
-        
-        // 重新繪製目前頁面
         renderCurrentView();
     }
 
     window.onload = function() {
         if (window.location.protocol === 'file:') {
             document.getElementById('localUploadBox').style.display = 'flex';
-            document.getElementById('resultStats').innerText = '請先匯入資料表';
-            showEmptyState('請先在上方黃色區塊匯入 data.csv 檔案。');
+            document.getElementById('resultStats').innerText = '待匯入資料';
+            showEmptyState('📁 請先在上方黃色區塊匯入您的 data.csv 檔案。');
             
             document.getElementById('localCsvFile').addEventListener('change', function(e) {
                 const file = e.target.files[0];
@@ -365,7 +469,7 @@
             .then(blob => parseCsvText(blob, 'big5'))
             .catch(err => {
                 document.getElementById('resultStats').innerText = '讀取失敗';
-                showEmptyState('❌ 載入失敗，找不到雲端 CSV 檔案。');
+                showEmptyState('❌ 載入失敗，請確認 data.csv 是否已上傳至正確位置。');
             });
         }
     };
@@ -462,14 +566,13 @@
         document.getElementById('pagination').innerHTML = '';
     }
 
-    // --- 核心渲染控制器 ---
     function renderCurrentView() {
         document.getElementById('emptyContainer').style.display = 'none';
         const stats = document.getElementById('resultStats');
-        stats.innerText = `✅ 共找到 ${filteredData.length} 筆職缺`;
+        stats.innerText = `找到 ${filteredData.length} 筆職缺`;
 
         if (filteredData.length === 0) {
-            showEmptyState('找不到符合條件的資料，請換個關鍵字試試。');
+            showEmptyState('🔍 找不到符合條件的資料，請嘗試更換搜尋關鍵字。');
             return;
         }
 
@@ -490,7 +593,6 @@
         renderPaginationControls();
     }
 
-    // 渲染卡片模式
     function renderCards(pageData) {
         const container = document.getElementById('cardContainer');
         container.innerHTML = '';
@@ -504,6 +606,7 @@
             if (item.建議證照) rawLicenses += `<strong>💡 建議證照：</strong>${item.建議證照}`;
             if (!rawLicenses) rawLicenses = '✅ 無特別要求證照';
 
+            const hlMilSpec = highlightText(item.軍職專長, currentKeyword);
             const hlJobTitle = highlightText(item.職業名稱, currentKeyword);
             const hlTasks = highlightText(item.民間工作任務用語, currentKeyword);
             const hlReason = highlightText(item.轉銜理由, currentKeyword);
@@ -512,23 +615,24 @@
 
             card.innerHTML = `
                 <div class="card-header">
-                    <span class="mil-badge">${item.軍職專長 || '-'}</span>
+                    <span class="mil-badge">${hlMilSpec || '-'}</span>
                     ${item.職業類別 ? `<span class="cat-badge" style="${catStyle}">${item.職業類別}</span>` : ''}
                 </div>
                 <div class="card-body">
                     <div class="card-title-row">
                         <h3 class="card-title">${hlJobTitle}</h3>
                         <button class="copy-btn" onclick="copyCardText(this, '${item.職業名稱 || ''}', '${item.職業類別 || ''}', \`${item.轉銜理由 || ''}\`, \`${rawLicenses}\`)">
-                            📋 複製
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                            複製
                         </button>
                     </div>
                     <div class="info-block">
                         <h4>📝 工作任務內容</h4>
                         <p>${hlTasks}</p>
                     </div>
-                    <div class="info-block" style="background: #f0fdf4;">
-                        <h4 style="color: #166534;">🎯 轉銜理由與優勢</h4>
-                        <p style="color: #14532d;">${hlReason}</p>
+                    <div class="info-block success">
+                        <h4>🎯 轉銜理由與優勢</h4>
+                        <p>${hlReason}</p>
                     </div>
                 </div>
                 <div class="card-footer">
@@ -539,7 +643,6 @@
         });
     }
 
-    // 渲染列表模式
     function renderTable(pageData) {
         const tbody = document.getElementById('tableBody');
         tbody.innerHTML = '';
@@ -552,6 +655,7 @@
             if (item.建議證照) rawLicenses += `<strong>建議：</strong>${item.建議證照}`;
             if (!rawLicenses) rawLicenses = '無特別要求';
 
+            const hlMilSpec = highlightText(item.軍職專長, currentKeyword);
             const hlJobTitle = highlightText(item.職業名稱, currentKeyword);
             const hlTasks = highlightText(item.民間工作任務用語, currentKeyword);
             const hlReason = highlightText(item.轉銜理由, currentKeyword);
@@ -559,12 +663,15 @@
             const catStyle = getCategoryStyle(item.職業類別);
 
             tr.innerHTML = `
-                <td><strong>${item.軍職專長 || '-'}</strong></td>
                 <td>
-                    ${item.職業類別 ? `<span class="cat-badge" style="display:inline-block; margin-bottom:5px; ${catStyle}">${item.職業類別}</span><br>` : ''}
+                    <div style="font-size:15px; font-weight:800; color:#1e293b;">${hlMilSpec || '-'}</div>
+                </td>
+                <td>
+                    ${item.職業類別 ? `<span class="cat-badge" style="display:inline-block; margin-bottom:8px; ${catStyle}">${item.職業類別}</span><br>` : ''}
                     <div class="td-job-title">${hlJobTitle}</div>
-                    <button class="copy-btn" style="margin-top: 10px;" onclick="copyCardText(this, '${item.職業名稱 || ''}', '${item.職業類別 || ''}', \`${item.轉銜理由 || ''}\`, \`${rawLicenses}\`)">
-                        📋 複製資訊
+                    <button class="copy-btn" style="margin-top: 12px;" onclick="copyCardText(this, '${item.職業名稱 || ''}', '${item.職業類別 || ''}', \`${item.轉銜理由 || ''}\`, \`${rawLicenses}\`)">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                        複製內容
                     </button>
                 </td>
                 <td class="td-multi-line">${hlTasks}</td>
