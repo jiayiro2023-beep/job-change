@@ -3,9 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>軍職專長轉銜民間職業查找系統 (卡片美學版)</title>
+    <title>軍職專長轉銜民間職業查找系統 (頂級體驗版)</title>
+    <!-- PapaParse 解析庫 -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
     
+    <!-- PWA 支援 -->
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#0f766e">
     <script>
@@ -31,33 +33,39 @@
             margin: 0;
             padding: 20px;
             line-height: 1.6;
+            scroll-behavior: smooth; /* 讓畫面滾動變得平滑 */
         }
         .container { max-width: 1300px; margin: 0 auto; }
         
-        /* 標題設計 */
         .header-title {
             text-align: center;
             color: var(--primary-color);
             font-size: 32px;
             font-weight: 800;
-            margin-bottom: 30px;
+            margin-bottom: 20px;
             text-shadow: 0 2px 4px rgba(0,0,0,0.05);
         }
 
-        /* 本機應急上傳區塊 */
         .local-upload-box { background: #fef08a; padding: 12px 20px; border-radius: 8px; margin-bottom: 20px; font-size: 15px; color: #854d0e; display: none; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); font-weight: bold;}
         .local-upload-box input[type="file"] { font-size: 14px; padding: 5px; }
 
-        /* 控制面板 (流線型設計) */
+        /* 優化4：控制面板置頂 (吸頂設計)，加入毛玻璃特效 */
+        .sticky-wrapper {
+            position: sticky;
+            top: 10px;
+            z-index: 1000;
+            margin-bottom: 30px;
+        }
         .control-panel { 
-            background: var(--card-bg); 
-            padding: 25px; 
+            background: rgba(255, 255, 255, 0.95); 
+            backdrop-filter: blur(10px);
+            padding: 20px 25px; 
             border-radius: 12px; 
-            margin-bottom: 30px; 
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
             display: flex; 
             flex-direction: column;
-            gap: 20px;
+            gap: 15px;
+            border: 1px solid rgba(203, 213, 225, 0.5);
         }
         .filters-row {
             display: grid;
@@ -65,10 +73,10 @@
             gap: 15px;
             align-items: end;
         }
-        .input-group { display: flex; flex-direction: column; gap: 8px; }
+        .input-group { display: flex; flex-direction: column; gap: 6px; }
         label { font-weight: 700; font-size: 14px; color: #475569; display: flex; align-items: center; gap: 6px; }
         select, input[type="text"] { 
-            padding: 12px; 
+            padding: 10px 12px; 
             border: 1px solid var(--border-color); 
             border-radius: 8px; 
             font-size: 15px; 
@@ -82,34 +90,33 @@
             box-shadow: 0 0 0 3px rgba(15, 118, 110, 0.15); 
         }
 
-        /* 清除按鈕與狀態列 */
         .action-row {
             display: flex;
             justify-content: space-between;
             align-items: center;
             flex-wrap: wrap;
             gap: 15px;
-            padding-top: 15px;
+            padding-top: 12px;
             border-top: 1px dashed var(--border-color);
         }
         .btn-reset {
             background-color: #e2e8f0;
             color: #475569;
             border: none;
-            padding: 10px 20px;
+            padding: 8px 16px;
             border-radius: 8px;
             cursor: pointer;
             font-weight: bold;
-            font-size: 15px;
+            font-size: 14px;
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 6px;
             transition: all 0.2s;
         }
-        .btn-reset:hover { background-color: #cbd5e1; color: #0f172a; transform: translateY(-1px); }
-        .stats { font-size: 16px; color: var(--primary-color); font-weight: 800; background: #ccfbf1; padding: 8px 16px; border-radius: 20px; }
+        .btn-reset:hover { background-color: #cbd5e1; color: #0f172a; }
+        .stats { font-size: 15px; color: var(--primary-color); font-weight: 800; background: #ccfbf1; padding: 6px 14px; border-radius: 20px; }
 
-        /* 卡片式排版設計 */
+        /* 卡片式排版 */
         .card-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
@@ -125,34 +132,51 @@
             flex-direction: column;
             overflow: hidden;
             transition: transform 0.2s ease, box-shadow 0.2s ease;
+            position: relative;
         }
         .card:hover {
-            transform: translateY(-5px);
+            transform: translateY(-4px);
             box-shadow: 0 12px 25px rgba(0,0,0,0.1);
         }
         
-        /* 卡片頭部：標籤 */
         .card-header {
             background: #f8fafc;
             padding: 15px 20px;
             border-bottom: 1px solid #e2e8f0;
             display: flex;
             justify-content: space-between;
-            align-items: flex-start;
+            align-items: center;
             gap: 10px;
         }
         .mil-badge { background: #334155; color: white; padding: 5px 12px; border-radius: 6px; font-size: 13px; font-weight: bold; }
-        .cat-badge { background: #e0f2fe; color: #0369a1; padding: 5px 12px; border-radius: 6px; font-size: 13px; font-weight: bold; text-align: right; }
+        .cat-badge { padding: 5px 12px; border-radius: 6px; font-size: 13px; font-weight: bold; text-align: right; }
         
-        /* 卡片內容：職稱與任務 */
+        /* 優化1：一鍵複製按鈕 */
+        .copy-btn {
+            background: #f1f5f9;
+            border: 1px solid #cbd5e1;
+            color: #475569;
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .copy-btn:hover { background: #e2e8f0; color: #0f172a; }
+        .copy-btn.copied { background: #dcfce7; color: #166534; border-color: #bbf7d0; }
+
         .card-body { padding: 20px; flex: 1; display: flex; flex-direction: column; gap: 15px; }
-        .card-title { font-size: 22px; color: var(--primary-color); margin: 0; font-weight: 800; }
+        .card-title-row { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; }
+        .card-title { font-size: 20px; color: var(--primary-color); margin: 0; font-weight: 800; line-height: 1.3;}
         
         .info-block { background: #f8fafc; padding: 15px; border-radius: 8px; }
-        .info-block h4 { margin: 0 0 10px 0; font-size: 15px; color: #475569; display: flex; align-items: center; gap: 6px; border-bottom: 2px solid #e2e8f0; padding-bottom: 5px; }
+        .info-block h4 { margin: 0 0 10px 0; font-size: 14px; color: #475569; display: flex; align-items: center; gap: 6px; border-bottom: 2px solid #e2e8f0; padding-bottom: 5px; }
         .info-block p { margin: 0; font-size: 14.5px; color: #334155; white-space: pre-wrap; line-height: 1.6; }
         
-        /* 卡片尾部：證照 */
         .card-footer {
             background: #fffbeb;
             padding: 15px 20px;
@@ -164,13 +188,22 @@
 
         .empty-state { text-align: center; padding: 60px 20px; color: #64748b; font-size: 18px; font-weight: bold; background: white; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.04); }
 
-        /* 分頁按鈕樣式 */
+        /* 優化2：螢光筆高亮樣式 */
+        .highlight {
+            background-color: #fef08a; /* 螢光黃 */
+            color: #000;
+            padding: 0 3px;
+            border-radius: 3px;
+            font-weight: bold;
+        }
+
+        /* 分頁按鈕 */
         .pagination-container { display: flex; justify-content: center; align-items: center; gap: 8px; flex-wrap: wrap; padding-bottom: 40px; }
-        .page-btn { padding: 10px 16px; border: 1px solid var(--border-color); background-color: white; border-radius: 8px; cursor: pointer; color: var(--text-color); font-size: 15px; font-weight: bold; transition: all 0.2s; box-shadow: 0 2px 4px rgba(0,0,0,0.02); }
-        .page-btn:hover:not(:disabled) { background-color: #f1f5f9; border-color: #94a3b8; transform: translateY(-2px); }
+        .page-btn { padding: 8px 14px; border: 1px solid var(--border-color); background-color: white; border-radius: 8px; cursor: pointer; color: var(--text-color); font-size: 14px; font-weight: bold; transition: all 0.2s; box-shadow: 0 2px 4px rgba(0,0,0,0.02); }
+        .page-btn:hover:not(:disabled) { background-color: #f1f5f9; border-color: #94a3b8; transform: translateY(-1px); }
         .page-btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; box-shadow: none; }
         .page-btn.active { background-color: var(--primary-color); color: white; border-color: var(--primary-color); box-shadow: 0 4px 6px rgba(15, 118, 110, 0.2); }
-        .page-info { font-size: 15px; color: #64748b; margin: 0 10px; font-weight: bold; }
+        .page-info { font-size: 14px; color: #64748b; margin: 0 10px; font-weight: bold; }
     </style>
 </head>
 <body>
@@ -179,36 +212,41 @@
     <div class="header-title">軍職專長轉銜民間職業 - 查找系統</div>
     
     <div id="localUploadBox" class="local-upload-box">
-        <span>💡 偵測為本機離線模式：請選取 <strong>data.csv</strong> 檔案即可啟用系統。</span>
+        <span>💡 偵測為本機模式：請選取 <strong>data.csv</strong> 檔案啟用系統。</span>
         <input type="file" id="localCsvFile" accept=".csv">
     </div>
 
-    <div class="control-panel">
-        <div class="filters-row">
-            <div class="input-group">
-                <label for="specFilter">🎯 軍職專長</label>
-                <select id="specFilter" disabled><option>等待資料載入...</option></select>
+    <!-- 吸頂外掛容器 -->
+    <div class="sticky-wrapper">
+        <div class="control-panel">
+            <div class="filters-row">
+                <div class="input-group">
+                    <label for="specFilter">🎯 軍職專長</label>
+                    <select id="specFilter" disabled><option>等待資料載入...</option></select>
+                </div>
+                <div class="input-group">
+                    <label for="catFilter">💼 民間職業類別</label>
+                    <select id="catFilter" disabled><option>等待資料載入...</option></select>
+                </div>
+                <div class="input-group">
+                    <label for="searchInput">🔍 關鍵字搜尋 (支援黃底螢光筆顯示)</label>
+                    <input type="text" id="searchInput" placeholder="輸入職缺、任務或證照關鍵字..." disabled>
+                </div>
             </div>
-            <div class="input-group">
-                <label for="catFilter">💼 民間職業類別</label>
-                <select id="catFilter" disabled><option>等待資料載入...</option></select>
+            
+            <div class="action-row">
+                <button class="btn-reset" id="resetBtn" onclick="resetFilters()" disabled>
+                    🔄 清除所有條件
+                </button>
+                <div id="resultStats" class="stats">🔄 系統初始化中...</div>
             </div>
-            <div class="input-group">
-                <label for="searchInput">🔍 關鍵字搜尋 (職缺/任務/證照)</label>
-                <input type="text" id="searchInput" placeholder="輸入關鍵字..." disabled>
-            </div>
-        </div>
-        
-        <div class="action-row">
-            <button class="btn-reset" id="resetBtn" onclick="resetFilters()" disabled>
-                🔄 清除條件
-            </button>
-            <div id="resultStats" class="stats">🔄 系統初始化中...</div>
         </div>
     </div>
 
+    <!-- 卡片展示區 -->
     <div id="cardContainer" class="card-grid"></div>
 
+    <!-- 分頁導覽列 -->
     <div class="pagination-container" id="pagination"></div>
 </div>
 
@@ -216,7 +254,58 @@
     let globalData = [];       
     let filteredData = [];     
     let currentPage = 1;       
-    const rowsPerPage = 10;    
+    const rowsPerPage = 10;
+    let currentKeyword = ""; // 記住目前的搜尋字，用來畫螢光筆
+
+    // 優化3：智慧型調色盤 (給職業類別標籤用)
+    const colorPalette = [
+        { bg: '#e0f2fe', text: '#0369a1' }, // 藍色系
+        { bg: '#f3e8ff', text: '#6b21a8' }, // 紫色系
+        { bg: '#dcfce7', text: '#15803d' }, // 綠色系
+        { bg: '#ffedd5', text: '#c2410c' }, // 橘色系
+        { bg: '#ffe4e6', text: '#be123c' }  // 粉紅色系
+    ];
+
+    // 根據文字內容自動分配固定顏色
+    function getCategoryStyle(categoryText) {
+        if (!categoryText) return '';
+        let hash = 0;
+        for (let i = 0; i < categoryText.length; i++) hash += categoryText.charCodeAt(i);
+        const color = colorPalette[hash % colorPalette.length];
+        return `background-color: ${color.bg}; color: ${color.text};`;
+    }
+
+    // 優化2：螢光筆文字替換函數
+    function highlightText(text, keyword) {
+        if (!text) return '-';
+        if (!keyword || keyword.trim() === '') return text;
+        // 使用正規表達式，不分大小寫尋找關鍵字，並套上 highlight 標籤
+        const regex = new RegExp(`(${keyword})`, 'gi');
+        return text.replace(regex, '<mark class="highlight">$1</mark>');
+    }
+
+    // 優化1：一鍵複製功能
+    function copyCardText(button, title, category, reason, licenses) {
+        const textToCopy = `【推薦職缺】${title} (${category})\n\n【轉銜優勢】\n${reason.replace(/<[^>]*>?/gm, '')}\n\n【證照建議】\n${licenses.replace(/<br>/g, '\n').replace(/<[^>]*>?/gm, '')}`;
+        
+        // 使用相容性最高的 execCommand 來複製
+        const textArea = document.createElement("textarea");
+        textArea.value = textToCopy;
+        document.body.appendChild(textArea);
+        textArea.select();
+        document.execCommand("copy");
+        document.body.removeChild(textArea);
+        
+        // 視覺回饋
+        const originalText = button.innerHTML;
+        button.innerHTML = '✅ 已複製';
+        button.classList.add('copied');
+        
+        setTimeout(() => {
+            button.innerHTML = originalText;
+            button.classList.remove('copied');
+        }, 2000);
+    }
 
     window.onload = function() {
         if (window.location.protocol === 'file:') {
@@ -301,24 +390,23 @@
         searchInput.addEventListener('input', runFiltering);
     }
 
-    // 新增：清除條件按鈕的專屬功能
     function resetFilters() {
         document.getElementById('specFilter').value = '';
         document.getElementById('catFilter').value = '';
         document.getElementById('searchInput').value = '';
-        runFiltering(); // 重設後自動執行搜尋
+        runFiltering(); 
     }
 
     function runFiltering() {
         const specValue = document.getElementById('specFilter').value;
         const catValue = document.getElementById('catFilter').value;
-        const keyword = document.getElementById('searchInput').value.toLowerCase();
+        currentKeyword = document.getElementById('searchInput').value.trim().toLowerCase();
 
         filteredData = globalData.filter(item => {
             const matchSpec = specValue === "" || item.軍職專長 === specValue;
             const matchCat = catValue === "" || item.職業類別 === catValue;
             const rowText = Object.values(item).join(' ').toLowerCase();
-            const matchKeyword = keyword === "" || rowText.includes(keyword);
+            const matchKeyword = currentKeyword === "" || rowText.includes(currentKeyword);
             return matchSpec && matchCat && matchKeyword;
         });
 
@@ -332,7 +420,6 @@
         document.getElementById('pagination').innerHTML = '';
     }
 
-    // 升級：繪製精美的卡片網格
     function renderCardsPage() {
         const container = document.getElementById('cardContainer');
         const stats = document.getElementById('resultStats');
@@ -353,31 +440,45 @@
             const card = document.createElement('div');
             card.className = 'card';
             
-            let licenses = '';
-            if (item.必須證照) licenses += `<strong>📍 必須證照：</strong>${item.必須證照}<br>`;
-            if (item.建議證照) licenses += `<strong>💡 建議證照：</strong>${item.建議證照}`;
-            if (!licenses) licenses = '✅ 無特別要求證照';
+            let rawLicenses = '';
+            if (item.必須證照) rawLicenses += `<strong>📍 必須證照：</strong>${item.必須證照}<br>`;
+            if (item.建議證照) rawLicenses += `<strong>💡 建議證照：</strong>${item.建議證照}`;
+            if (!rawLicenses) rawLicenses = '✅ 無特別要求證照';
+
+            // 套用螢光筆高亮
+            const hlJobTitle = highlightText(item.職業名稱, currentKeyword);
+            const hlTasks = highlightText(item.民間工作任務用語, currentKeyword);
+            const hlReason = highlightText(item.轉銜理由, currentKeyword);
+            const hlLicenses = highlightText(rawLicenses, currentKeyword);
+            
+            // 取得智慧配色
+            const catStyle = getCategoryStyle(item.職業類別);
 
             card.innerHTML = `
                 <div class="card-header">
                     <span class="mil-badge">${item.軍職專長 || '-'}</span>
-                    ${item.職業類別 ? `<span class="cat-badge">${item.職業類別}</span>` : ''}
+                    ${item.職業類別 ? `<span class="cat-badge" style="${catStyle}">${item.職業類別}</span>` : ''}
                 </div>
                 <div class="card-body">
-                    <h3 class="card-title">${item.職業名稱 || '-'}</h3>
+                    <div class="card-title-row">
+                        <h3 class="card-title">${hlJobTitle}</h3>
+                        <button class="copy-btn" onclick="copyCardText(this, '${item.職業名稱 || ''}', '${item.職業類別 || ''}', \`${item.轉銜理由 || ''}\`, \`${rawLicenses}\`)">
+                            📋 複製分享
+                        </button>
+                    </div>
                     
                     <div class="info-block">
                         <h4>📝 工作任務內容</h4>
-                        <p>${item.民間工作任務用語 || '-'}</p>
+                        <p>${hlTasks}</p>
                     </div>
                     
                     <div class="info-block" style="background: #f0fdf4;">
                         <h4 style="color: #166534;">🎯 轉銜理由與優勢</h4>
-                        <p style="color: #14532d;">${item.轉銜理由 || '-'}</p>
+                        <p style="color: #14532d;">${hlReason}</p>
                     </div>
                 </div>
                 <div class="card-footer">
-                    ${licenses}
+                    ${hlLicenses}
                 </div>
             `;
             container.appendChild(card);
