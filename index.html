@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>軍職專長轉銜民間職業查找系統</title>
+    <title>軍職專長轉銜民間職業查找系統 (分頁進階版)</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
     
     <link rel="manifest" href="manifest.json">
@@ -32,11 +32,16 @@
         }
         .container { max-width: 1300px; margin: 0 auto; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08); }
         h1 { color: var(--primary-color); text-align: center; border-bottom: 2px solid var(--border-color); padding-bottom: 15px; margin-bottom: 25px; }
+        
         .control-panel { background: #f1f5f9; padding: 20px; border-radius: 8px; margin-bottom: 25px; border: 1px solid var(--border-color); display: flex; gap: 15px; flex-wrap: wrap; }
-        .input-group { display: flex; flex-direction: column; gap: 8px; flex: 1; min-width: 200px; }
+        .input-group { display: flex; flex-direction: column; gap: 8px; flex: 1; min-width: 220px; }
         label { font-weight: 600; font-size: 14px; color: #475569; }
-        select, input[type="text"] { padding: 10px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 15px; background-color: white; }
+        select, input[type="text"], input[type="file"] { padding: 10px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 15px; background-color: white; }
         select:focus, input[type="text"]:focus { outline: none; border-color: var(--primary-color); box-shadow: 0 0 0 2px rgba(15, 118, 110, 0.2); }
+        
+        /* 本機應急上傳區塊 */
+        .local-upload-box { background: #fef08a; padding: 10px 15px; border-radius: 6px; border: 1px solid #fef08a; margin-bottom: 15px; font-size: 14px; color: #854d0e; display: none; align-items: center; gap: 15px; width: 100%; box-sizing: border-box; }
+
         .table-container { overflow-x: auto; border-radius: 8px; border: 1px solid var(--border-color); }
         table { width: 100%; border-collapse: collapse; background: white; }
         th, td { padding: 16px; text-align: left; border-bottom: 1px solid #e2e8f0; vertical-align: top; }
@@ -46,8 +51,15 @@
         .job-title { color: #0f766e; font-size: 16px; font-weight: bold; }
         .multi-line { white-space: pre-wrap; font-size: 14px; color: #475569; }
         .empty-state { text-align: center; padding: 40px; color: #64748b; font-size: 16px; }
-        .stats { margin-top: 10px; font-size: 14px; color: #64748b; text-align: right; width: 100%; }
-        .error-msg { color: #dc2626; font-weight: bold; text-align: center; padding: 20px; }
+        .stats { margin-top: 10px; font-size: 14px; color: #64748b; text-align: right; width: 100%; font-weight: bold;}
+        
+        /* 分頁按鈕樣式 */
+        .pagination-container { display: flex; justify-content: center; align-items: center; gap: 8px; margin-top: 25px; flex-wrap: wrap; }
+        .page-btn { padding: 8px 14px; border: 1px solid var(--border-color); background-color: white; border-radius: 6px; cursor: pointer; color: var(--text-color); font-size: 14px; transition: all 0.2s; }
+        .page-btn:hover:not(:disabled) { background-color: #e2e8f0; border-color: #94a3b8; }
+        .page-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+        .page-btn.active { background-color: var(--primary-color); color: white; border-color: var(--primary-color); font-weight: bold; }
+        .page-info { font-size: 14px; color: #64748b; margin: 0 10px; }
     </style>
 </head>
 <body>
@@ -55,20 +67,25 @@
 <div class="container">
     <h1>軍職專長轉銜民間職業 - 查找系統</h1>
     
+    <div id="localUploadBox" class="local-upload-box">
+        💡 偵測到您目前在「本機電腦」直接開啟。請在此選取您的 <strong>data.csv</strong> 檔案即可立刻開始查詢：
+        <input type="file" id="localCsvFile" accept=".csv">
+    </div>
+
     <div class="control-panel">
         <div class="input-group">
             <label for="specFilter">🎯 篩選軍職專長</label>
-            <select id="specFilter" disabled><option>資料載入中...</option></select>
+            <select id="specFilter" disabled><option>等待資料載入...</option></select>
         </div>
         <div class="input-group">
             <label for="catFilter">💼 篩選民間職業類別</label>
-            <select id="catFilter" disabled><option>資料載入中...</option></select>
+            <select id="catFilter" disabled><option>等待資料載入...</option></select>
         </div>
         <div class="input-group">
-            <label for="searchInput">🔍 關鍵字搜尋</label>
-            <input type="text" id="searchInput" placeholder="輸入職缺、工作任務或證照..." disabled>
+            <label for="searchInput">🔍 關鍵字複合搜尋</label>
+            <input type="text" id="searchInput" placeholder="可輸入職缺、任務描述或建議證照..." disabled>
         </div>
-        <div id="resultStats" class="stats">正在讀取 data.csv 完整資料...</div>
+        <div id="resultStats" class="stats">正在嘗試自動讀取雲端 data.csv...</div>
     </div>
 
     <div class="table-container">
@@ -83,49 +100,66 @@
                 </tr>
             </thead>
             <tbody id="tableBody">
-                <tr><td colspan="5" class="empty-state">系統初始化中...</td></tr>
+                <tr><td colspan="5" class="empty-state">系統初始化中，請稍候...</td></tr>
             </tbody>
         </table>
     </div>
+
+    <div class="pagination-container" id="pagination"></div>
 </div>
 
 <script>
-    let globalData = []; 
+    let globalData = [];       // 儲存整理乾淨後的全部資料
+    let filteredData = [];     // 儲存被條件篩選後的資料
+    let currentPage = 1;       // 當前所在頁碼
+    const rowsPerPage = 10;    // 每頁固定的資料筆數
 
-    // 網頁啟動時，直接去抓與 index.html 同一個雲端資料夾下的 data.csv
     window.onload = function() {
-        fetch('data.csv')
-        .then(response => {
-            if (!response.ok) {
-                throw new Error('找不到 data.csv 檔案，請確認檔案已上傳至 GitHub');
-            }
-            // 轉成文字檔，並強制使用台灣常用的 Big5 或自動辨識，但最安全是用解碼
-            return response.blob();
-        })
-        .then(blob => {
-            // 使用 FileReader 來處理 Excel 匯出可能產生的 Big5 編碼問題
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                const text = e.target.result;
-                // 用 PapaParse 解析完整的 CSV 文字內容
-                Papa.parse(text, {
-                    header: true,
-                    skipEmptyLines: true,
-                    complete: function(results) {
-                        processAndCleanData(results.data);
-                    }
-                });
-            };
-            // 預設用 big5 讀取台灣 Excel CSV，若您是用 UTF-8 可以改成 'utf-8'
-            reader.readAsText(blob, 'big5'); 
-        })
-        .catch(err => {
-            document.getElementById('tableBody').innerHTML = `<tr><td colspan="5"><div class="error-msg">❌ 讀取失敗：在本機電腦直接雙擊打開網頁會被瀏覽器安全機制阻擋。請將 index.html 和 data.csv 檔案上傳到 GitHub Pages 後，由網址開啟即可看到完整資料！</div></td></tr>`;
-            document.getElementById('resultStats').innerText = err.message;
-        });
+        // 判斷是否為本機直接點開 (file:// 機制)
+        if (window.location.protocol === 'file:') {
+            document.getElementById('localUploadBox').style.display = 'flex';
+            document.getElementById('resultStats').innerText = '請先在上方黃色區塊選擇您的 CSV 資料表。';
+            document.getElementById('tableBody').innerHTML = '<tr><td colspan="5" class="empty-state">請先匯入 data.csv 檔案。</td></tr>';
+            
+            // 綁定本機手動上傳事件
+            document.getElementById('localCsvFile').addEventListener('change', function(e) {
+                const file = e.target.files[0];
+                if (!file) return;
+                parseCsvText(file, 'big5'); // 預設用台灣 Excel 常用的 big5 讀取本機檔案
+            });
+        } else {
+            // 在 GitHub Pages 等網路環境下，自動線上抓取 data.csv
+            fetch('data.csv')
+            .then(response => {
+                if (!response.ok) throw new Error('找不到 data.csv 檔案');
+                return response.blob();
+            })
+            .then(blob => {
+                parseCsvText(blob, 'big5');
+            })
+            .catch(err => {
+                document.getElementById('resultStats').innerText = '自動讀取失敗，請確認 data.csv 已與網頁一起上傳。';
+                document.getElementById('tableBody').innerHTML = '<tr><td colspan="5" class="empty-state" style="color:red;">載入失敗，找不到雲端 CSV 檔案。</td></tr>';
+            });
+        }
     };
 
-    // 處理 Excel 合併儲存格空白並載入全部資料
+    // 通用 CSV 轉換函式
+    function parseCsvText(target, encoding) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            Papa.parse(e.target.result, {
+                header: true,
+                skipEmptyLines: true,
+                complete: function(results) {
+                    processAndCleanData(results.data);
+                }
+            });
+        };
+        reader.readAsText(target, encoding);
+    }
+
+    // 處理 Excel 合併儲存格所造成的空白格，將幾千筆資料清洗完整
     function processAndCleanData(rawData) {
         globalData = [];
         let specialties = new Set();
@@ -134,6 +168,7 @@
         let currentTaskTerm = "";
 
         rawData.forEach(row => {
+            // 合併儲存格向下填補邏輯
             if (row['軍職專長'] && row['軍職專長'].trim() !== '') currentMilitarySpec = row['軍職專長'].trim();
             if (row['民間工作任務用語'] && row['民間工作任務用語'].trim() !== '') currentTaskTerm = row['民間工作任務用語'].trim();
 
@@ -149,8 +184,13 @@
             }
         });
 
+        // 開啟並設定篩選選單
         initFilters(specialties, categories);
-        renderTable(globalData);
+        
+        // 預設將過濾後的資料庫設為全體，並呈現第一頁
+        filteredData = [...globalData];
+        currentPage = 1;
+        renderTablePage();
     }
 
     function initFilters(specialties, categories) {
@@ -166,38 +206,54 @@
         catFilter.innerHTML = '<option value="">顯示全部職業類別</option>';
         Array.from(categories).sort().forEach(cat => catFilter.innerHTML += `<option value="${cat}">${cat}</option>`);
 
-        specFilter.addEventListener('change', filterData);
-        catFilter.addEventListener('change', filterData);
-        searchInput.addEventListener('input', filterData);
+        // 三個搜尋條件更動時，都會即時觸發過濾機制
+        specFilter.addEventListener('change', runFiltering);
+        catFilter.addEventListener('change', runFiltering);
+        searchInput.addEventListener('input', runFiltering);
     }
 
-    function filterData() {
+    // 執行交叉篩選（軍職 + 職業類別 + 關鍵字）
+    function runFiltering() {
         const specValue = document.getElementById('specFilter').value;
         const catValue = document.getElementById('catFilter').value;
         const keyword = document.getElementById('searchInput').value.toLowerCase();
 
-        const filteredData = globalData.filter(item => {
+        filteredData = globalData.filter(item => {
             const matchSpec = specValue === "" || item.軍職專長 === specValue;
             const matchCat = catValue === "" || item.職業類別 === catValue;
+            
+            // 關鍵字檢查所有主要欄位：軍職、職缺名、任務內容、轉銜理由、證照
             const rowText = Object.values(item).join(' ').toLowerCase();
             const matchKeyword = keyword === "" || rowText.includes(keyword);
+            
             return matchSpec && matchCat && matchKeyword;
         });
 
-        renderTable(filteredData);
+        currentPage = 1; // 每次搜尋都要把頁碼跳回第一頁
+        renderTablePage();
     }
 
-    function renderTable(data) {
+    // 核心功能：計算分頁並繪製特定頁面的 10 筆資料
+    function renderTablePage() {
         const tbody = document.getElementById('tableBody');
-        document.getElementById('resultStats').innerText = `共找到 ${data.length} 筆對應職缺`;
+        const stats = document.getElementById('resultStats');
         tbody.innerHTML = '';
 
-        if (data.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="5"><div class="empty-state">找不到符合條件的資料，請調整篩選選項。</div></td></tr>';
+        stats.innerText = `篩選結果：共找到 ${filteredData.length} 筆職缺`;
+
+        if (filteredData.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="5"><div class="empty-state">找不到符合條件的資料，請換個關鍵字試試。</div></td></tr>';
+            document.getElementById('pagination').innerHTML = '';
             return;
         }
 
-        data.forEach(item => {
+        // 計算目前這一頁要切算的開頭和結尾位置（每頁10筆）
+        const startIndex = (currentPage - 1) * rowsPerPage;
+        const endIndex = startIndex + rowsPerPage;
+        const pageData = filteredData.slice(startIndex, endIndex);
+
+        // 繪製這 10 筆資料
+        pageData.forEach(item => {
             const tr = document.createElement('tr');
             let licenses = '';
             if (item.必須證照) licenses += `<strong>必須：</strong>${item.必須證照}<br>`;
@@ -216,6 +272,68 @@
             `;
             tbody.appendChild(tr);
         });
+
+        // 更新底部的分頁按鈕導覽列
+        renderPaginationControls();
+    }
+
+    // 建立分頁按鈕（上一頁、頁碼、下一頁）
+    function renderPaginationControls() {
+        const paginationContainer = document.getElementById('pagination');
+        paginationContainer.innerHTML = '';
+
+        const totalPages = Math.ceil(filteredData.length / rowsPerPage);
+        if (totalPages <= 1) return; // 如果只有一頁，就不用顯示分頁按鈕
+
+        // 上一頁按鈕
+        const prevBtn = document.createElement('button');
+        prevBtn.className = 'page-btn';
+        prevBtn.innerText = '⬅ 上一頁';
+        prevBtn.disabled = currentPage === 1;
+        prevBtn.addEventListener('click', () => {
+            currentPage--;
+            renderTablePage();
+            window.scrollTo({top: 0, behavior: 'smooth'}); // 自動平滑捲動回網頁頂部
+        });
+        paginationContainer.appendChild(prevBtn);
+
+        // 動態計算顯示的頁碼（避免幾千筆資料產生幾百個數字按鈕）
+        let startPage = Math.max(1, currentPage - 2);
+        let endPage = Math.min(totalPages, startPage + 4);
+        if (endPage - startPage < 4) {
+            startPage = Math.max(1, endPage - 4);
+        }
+
+        // 繪製數字頁碼按鈕
+        for (let i = startPage; i <= endPage; i++) {
+            const pageBtn = document.createElement('button');
+            pageBtn.className = `page-btn ${i === currentPage ? 'active' : ''}`;
+            pageBtn.innerText = i;
+            pageBtn.addEventListener('click', () => {
+                currentPage = i;
+                renderTablePage();
+                window.scrollTo({top: 0, behavior: 'smooth'});
+            });
+            paginationContainer.appendChild(pageBtn);
+        }
+
+        // 下一頁按鈕
+        const nextBtn = document.createElement('button');
+        nextBtn.className = 'page-btn';
+        nextBtn.innerText = '下一頁 ➡';
+        nextBtn.disabled = currentPage === totalPages;
+        nextBtn.addEventListener('click', () => {
+            currentPage++;
+            renderTablePage();
+            window.scrollTo({top: 0, behavior: 'smooth'});
+        });
+        paginationContainer.appendChild(nextBtn);
+
+        // 頁碼文字提示
+        const pageInfo = document.createElement('span');
+        pageInfo.className = 'page-info';
+        pageInfo.innerText = `第 ${currentPage} / ${totalPages} 頁`;
+        paginationContainer.appendChild(pageInfo);
     }
 </script>
 </body>
